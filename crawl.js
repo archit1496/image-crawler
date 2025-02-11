@@ -123,7 +123,7 @@ async function crawlPage(url, maxDepth, currentDepth, imagesFolder, retries = 3)
                         linkPromises.push(crawlPage(nextUrl, maxDepth, currentDepth + 1, imagesFolder));
                     }
                 } catch (error) {
-                    // Skip invalid URLs
+                    console.error(`Invalid URL: ${href} on page ${url}`);
                 }
             }
         });

@@ -1,0 +1,97 @@
+Key Components
+
+1. Dependencies
+
+const fs = require('fs');         // File system operations
+const path = require('path');     // Path manipulation
+const axios = require('axios');   // HTTP requests
+const cheerio = require('cheerio');// HTML parsing
+const crypto = require('crypto'); // For creating unique hashes
+const { URL } = require('url');   // URL parsing and manipulation
+
+
+2. Global Variables
+- const visited = new Set();        // Set to track already visited URLs
+- const imagesInfo = [];           // Array to store metadata about downloaded images
+
+3. Main Functions
+
+downloadImage(imgUrl, pageUrl, depth, imagesFolder)
+- Downloads an image from a given URL
+Key features:
+    - Uses axios to download the image with a 10-second timeout
+    - Sets a realistic User-Agent header to avoid being blocked
+    - Creates unique filenames using MD5 hashing
+    - Saves image metadata (URL, source page, depth)
+    - Handles errors gracefully
+
+4. crawlPage(url, maxDepth, currentDepth, imagesFolder, retries = 3)
+The main crawling function that:
+- Implements depth limiting
+- Prevents revisiting URLs
+- Retries failed requests up to 3 times
+- Uses cheerio to parse HTML and find:
+    - All <img> tags to download images
+    - All <a> tags to follow links
+- Processes all images and links concurrently using Promise.all()
+
+5. main()
+Entry point that:
+- Validates command-line arguments (start URL and depth)
+- Creates an 'images' directory if it doesn't exist
+- Initiates the crawl
+- Saves metadata to index.json when finished
+
+
+Key Features
+Error Handling
+- Robust error handling throughout
+- Retry mechanism for failed requests
+- Invalid URL handling
+- Timeout protection
+
+Performance
+- Concurrent downloads using Promises
+- Efficient URL tracking to prevent loops
+- Configurable depth control
+
+Output
+- Downloads images to local 'images' folder
+- Creates unique filenames to prevent conflicts
+- Generates index.json with metadata
+- Detailed console logging
+
+For example:
+node crawl.js https://example.com 2
+
+This would:
+- Start crawling at example.com
+- Follow links up to 2 levels deep
+- Download all images found
+- Save them in an 'images' folder
+- Create an index.json with metadata
+
+Safety Features
+- User-Agent headers to identify as a browser
+- Request timeouts
+- Retry mechanism
+- Only follows http(s) links
+- Handles relative and absolute URLs
+- Validates content types
+
+
+
+Suppose you run: crawl https://example.com 2
+1) Depth 1 (Initial Page)
+Crawls https://example.com
+Downloads all images from this page
+Records these images with depth: 1
+
+2)Depth 2 (Child Pages)
+Finds all links on https://example.com
+For each link (e.g., https://example.com/page1, https://example.com/page2):
+Crawls the page
+Downloads all images
+Records these images with depth: 2
+Won't crawl any links found on these depth-2 pages
+

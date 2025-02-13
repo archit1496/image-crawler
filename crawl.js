@@ -86,12 +86,15 @@ async function crawlPage(url, maxDepth, currentDepth, imagesFolder, retries = 3)
             await delay(2000 * attempt); // Wait longer between each retry
         }
     }
-
+    
+    // Check if the response is an HTML document
     const contentType = response.headers['content-type'];
     if (!contentType || !contentType.includes('text/html')) {
         return;
     }
-
+    
+    // Parse the HTML content
+    //returns a function (usually denoted as $) that lets you query and manipulate the parsed HTML using jQuery-like syntax
     const $ = cheerio.load(response.data);
 
     // Process and download all images on the current page.
@@ -101,6 +104,7 @@ async function crawlPage(url, maxDepth, currentDepth, imagesFolder, retries = 3)
         if (src) {
             try {
                 // Resolve relative URLs using the current page URL
+                //Example: if src="/images/photo.jpg" and url="https://example.com", it creates "https://example.com/images/photo.jpg"
                 const imgUrl = new URL(src, url).href;
                 imgPromises.push(downloadImage(imgUrl, url, currentDepth, imagesFolder));
             } catch (error) {
@@ -108,6 +112,11 @@ async function crawlPage(url, maxDepth, currentDepth, imagesFolder, retries = 3)
             }
         }
     });
+    // Wait for all image downloads to complete
+    // allows for concurrent downloading of multiple images
+    // The benefits of concurrent downloads are:
+    // Much faster overall completion time
+    // Better resource utilization (network bandwidth)
     await Promise.all(imgPromises);
 
     // If not at max depth, crawl each link on the page.
@@ -119,6 +128,7 @@ async function crawlPage(url, maxDepth, currentDepth, imagesFolder, retries = 3)
                 try {
                     const nextUrl = new URL(href, url).href;
                     // Only follow http(s) links
+                    // Excludes other protocols like "mailto:", "tel:", "javascript:", etc.
                     if (nextUrl.startsWith('http')) {
                         linkPromises.push(crawlPage(nextUrl, maxDepth, currentDepth + 1, imagesFolder));
                     }
@@ -127,6 +137,7 @@ async function crawlPage(url, maxDepth, currentDepth, imagesFolder, retries = 3)
                 }
             }
         });
+        //The concurrent processing makes it efficient, while the depth checking and URL validation make it controlled and safe.
         await Promise.all(linkPromises);
     }
 }
